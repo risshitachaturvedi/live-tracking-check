@@ -237,6 +237,107 @@
 
 // export default SensorPermission;
 
+// import { useEffect, useState } from "react";
+
+// const SensorPermission = () => {
+//   const [motionData, setMotionData] = useState(null);
+//   const [orientationData, setOrientationData] = useState(null);
+//   const [permissionStatus, setPermissionStatus] = useState("pending");
+
+//   useEffect(() => {
+//     const isAndroid = /Android/i.test(navigator.userAgent);
+
+//     if (!isAndroid) {
+//       setPermissionStatus("not-applicable");
+//       return;
+//     }
+
+//     const requestPermission = async () => {
+//       if (typeof DeviceMotionEvent.requestPermission === "function") {
+//         try {
+//           const motionPermission = await DeviceMotionEvent.requestPermission();
+//           const orientationPermission =
+//             await DeviceOrientationEvent.requestPermission();
+
+//           if (
+//             motionPermission === "granted" &&
+//             orientationPermission === "granted"
+//           ) {
+//             setPermissionStatus("granted");
+//             window.addEventListener("devicemotion", handleMotion);
+//             window.addEventListener("deviceorientation", handleOrientation);
+//           } else {
+//             setPermissionStatus("denied");
+//           }
+//         } catch (error) {
+//           setPermissionStatus("denied");
+//         }
+//       } else {
+//         // Non-iOS devices don't need permission request
+//         setPermissionStatus("granted");
+//         window.addEventListener("devicemotion", handleMotion);
+//         window.addEventListener("deviceorientation", handleOrientation);
+//       }
+//     };
+
+//     const handleMotion = (event) => {
+//       setMotionData({
+//         acceleration: event.acceleration,
+//         rotationRate: event.rotationRate,
+//       });
+//     };
+
+//     const handleOrientation = (event) => {
+//       setOrientationData({
+//         alpha: event.alpha,
+//         beta: event.beta,
+//         gamma: event.gamma,
+//       });
+//     };
+
+//     requestPermission();
+
+//     return () => {
+//       window.removeEventListener("devicemotion", handleMotion);
+//       window.removeEventListener("deviceorientation", handleOrientation);
+//     };
+//   }, []);
+
+//   return (
+//     <div className="p-4 text-center">
+//       <h2 className="text-xl font-bold">Sensor Permissions</h2>
+//       {permissionStatus === "not-applicable" && (
+//         <p className="text-gray-500">
+//           This feature is only for Android web browsers.
+//         </p>
+//       )}
+//       {permissionStatus === "pending" && <p>Requesting permission...</p>}
+//       {permissionStatus === "denied" && (
+//         <p className="text-red-500">Permission Denied</p>
+//       )}
+//       {permissionStatus === "granted" && (
+//         <div>
+//           <h3 className="mt-4 font-semibold">Device Motion</h3>
+//           {motionData ? (
+//             <pre>{JSON.stringify(motionData, null, 2)}</pre>
+//           ) : (
+//             <p>No motion data</p>
+//           )}
+
+//           <h3 className="mt-4 font-semibold">Device Orientation</h3>
+//           {orientationData ? (
+//             <pre>{JSON.stringify(orientationData, null, 2)}</pre>
+//           ) : (
+//             <p>No orientation data</p>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default SensorPermission;
+
 import { useEffect, useState } from "react";
 
 const SensorPermission = () => {
@@ -254,39 +355,55 @@ const SensorPermission = () => {
 
     const requestPermission = async () => {
       if (typeof DeviceMotionEvent.requestPermission === "function") {
+        // Explicitly request permission for Device Motion and Device Orientation
         try {
           const motionPermission = await DeviceMotionEvent.requestPermission();
           const orientationPermission =
             await DeviceOrientationEvent.requestPermission();
+
+          console.log("Motion Permission:", motionPermission);
+          console.log("Orientation Permission:", orientationPermission);
 
           if (
             motionPermission === "granted" &&
             orientationPermission === "granted"
           ) {
             setPermissionStatus("granted");
+            // Add event listeners after permission is granted
             window.addEventListener("devicemotion", handleMotion);
             window.addEventListener("deviceorientation", handleOrientation);
           } else {
             setPermissionStatus("denied");
           }
         } catch (error) {
+          console.error("Permission request failed:", error);
           setPermissionStatus("denied");
         }
       } else {
-        // Non-iOS devices don't need permission request
+        // Non-iOS devices don’t need permission request
         setPermissionStatus("granted");
         window.addEventListener("devicemotion", handleMotion);
         window.addEventListener("deviceorientation", handleOrientation);
       }
     };
 
-    const handleMotion = (event) => {
-      setMotionData({
-        acceleration: event.acceleration,
-        rotationRate: event.rotationRate,
-      });
+    // Permission Request Triggered by User Interaction
+    const requestPermissionsOnClick = () => {
+      setPermissionStatus("pending");
+      requestPermission();
     };
 
+    // Handle Motion Data
+    const handleMotion = (event) => {
+      if (event.acceleration) {
+        setMotionData({
+          acceleration: event.acceleration,
+          rotationRate: event.rotationRate,
+        });
+      }
+    };
+
+    // Handle Orientation Data
     const handleOrientation = (event) => {
       setOrientationData({
         alpha: event.alpha,
@@ -295,45 +412,49 @@ const SensorPermission = () => {
       });
     };
 
-    requestPermission();
+    // Make sure the permission is requested by clicking a button
+    return (
+      <div className="p-4 text-center">
+        <h2 className="text-xl font-bold">Sensor Permissions</h2>
+        {permissionStatus === "not-applicable" && (
+          <p className="text-gray-500">
+            This feature is only for Android web browsers.
+          </p>
+        )}
+        {permissionStatus === "pending" && <p>Requesting permission...</p>}
+        {permissionStatus === "denied" && (
+          <p className="text-red-500">Permission Denied</p>
+        )}
+        {permissionStatus === "granted" && (
+          <div>
+            <h3 className="mt-4 font-semibold">Device Motion</h3>
+            {motionData ? (
+              <pre>{JSON.stringify(motionData, null, 2)}</pre>
+            ) : (
+              <p>No motion data</p>
+            )}
 
-    return () => {
-      window.removeEventListener("devicemotion", handleMotion);
-      window.removeEventListener("deviceorientation", handleOrientation);
-    };
-  }, []);
+            <h3 className="mt-4 font-semibold">Device Orientation</h3>
+            {orientationData ? (
+              <pre>{JSON.stringify(orientationData, null, 2)}</pre>
+            ) : (
+              <p>No orientation data</p>
+            )}
+          </div>
+        )}
+        {permissionStatus === "pending" && (
+          <button
+            onClick={requestPermissionsOnClick}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Grant Permissions
+          </button>
+        )}
+      </div>
+    );
+  }, [permissionStatus]);
 
-  return (
-    <div className="p-4 text-center">
-      <h2 className="text-xl font-bold">Sensor Permissions</h2>
-      {permissionStatus === "not-applicable" && (
-        <p className="text-gray-500">
-          This feature is only for Android web browsers.
-        </p>
-      )}
-      {permissionStatus === "pending" && <p>Requesting permission...</p>}
-      {permissionStatus === "denied" && (
-        <p className="text-red-500">Permission Denied</p>
-      )}
-      {permissionStatus === "granted" && (
-        <div>
-          <h3 className="mt-4 font-semibold">Device Motion</h3>
-          {motionData ? (
-            <pre>{JSON.stringify(motionData, null, 2)}</pre>
-          ) : (
-            <p>No motion data</p>
-          )}
-
-          <h3 className="mt-4 font-semibold">Device Orientation</h3>
-          {orientationData ? (
-            <pre>{JSON.stringify(orientationData, null, 2)}</pre>
-          ) : (
-            <p>No orientation data</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return <div></div>;
 };
 
 export default SensorPermission;
